@@ -12,5 +12,5 @@ go build -o float_sum.exe
 ```
 ### Запуск без бинарного файла
 ``` sh
-go run main.go numbers.txt
+go run main.go <файл с числами>
 ```
