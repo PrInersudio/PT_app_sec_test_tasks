@@ -1,6 +1,10 @@
 package floatcalculation
 
-import "github.com/shopspring/decimal"
+import (
+	"errors"
+
+	"github.com/shopspring/decimal"
+)
 
 /*
 Вычисления параметров:
@@ -8,7 +12,7 @@ import "github.com/shopspring/decimal"
 -	Y = Y1 / Y2 * Y3 (значение возвращаем с точностью E);
 -	IsEqual = “T” - если выводимые значения равны, и “F” в противном случае.
 */
-func floatCalculation( // входные переменные
+func FloatCalculation( // входные переменные
 	X1 decimal.Decimal,
 	X2 decimal.Decimal,
 	X3 decimal.Decimal,
@@ -20,7 +24,16 @@ func floatCalculation( // входные переменные
 	X decimal.Decimal,
 	Y decimal.Decimal,
 	IsEqual string,
+	err error,
 ) {
+	if X2.IsZero() || Y2.IsZero() {
+		X = decimal.Zero
+		Y = decimal.Zero
+		IsEqual = "F"
+		err = errors.New("деление на нуль")
+		return
+	}
+	err = nil
 	X = X1.Mul(X3).DivRound(X2, E)
 	Y = Y1.Mul(Y3).DivRound(Y2, E)
 	if X.Equal(Y) {

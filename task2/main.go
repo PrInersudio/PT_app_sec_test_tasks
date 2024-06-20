@@ -2,8 +2,11 @@ package main
 
 import (
 	"float_service/config"
+	"float_service/handlers/hanlefloatcalculation"
+	mwLogger "float_service/middleware/logger"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5"
@@ -28,11 +31,25 @@ func main() {
 	// добавление к каждому запросу ID, чтобы потом отслеживать, что пошло не так
 	router.Use(middleware.RequestID)
 	// логгирование запросов
-	router.Use(middleware.Logger)
+	router.Use(mwLogger.New(log))
 	// восстановление в случае паники у обработчика
 	router.Use(middleware.Recoverer)
 	// "красивые" url у обработчиков
 	router.Use(middleware.URLFormat)
+	// добавляем обработчик
+	router.Get("/", hanlefloatcalculation.New(log))
+	log.Info("Запускаем сервер.", slog.String("address", cfg.Address))
+	srv := &http.Server{
+		Addr:         cfg.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+	}
+	if err := srv.ListenAndServe(); err != nil {
+		log.Error("Ошибка при запуске сервера.")
+	}
+	log.Error("Сервер остановлен.")
 }
 
 // настройка логгирования
