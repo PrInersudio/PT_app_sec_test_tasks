@@ -1,4 +1,4 @@
-module float_service
+module FloatService
 
 go 1.22.4
 

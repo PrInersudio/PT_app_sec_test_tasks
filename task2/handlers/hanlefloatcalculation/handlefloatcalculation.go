@@ -1,7 +1,7 @@
 package hanlefloatcalculation
 
 import (
-	"float_service/response"
+	"FloatService/response"
 	"log/slog"
 	"net/http"
 
@@ -18,7 +18,7 @@ type Request struct {
 	Y1 decimal.Decimal `json:"Y1" validate:"required"`
 	Y2 decimal.Decimal `json:"Y2" validate:"required"`
 	Y3 decimal.Decimal `json:"Y3" validate:"required"`
-	E  int32           `json:"E" validate:"required"`
+	E  *int32          `json:"E" validate:"required"`
 }
 
 type Response struct {
@@ -71,7 +71,7 @@ func New(log *slog.Logger, calculator FloatCalculatorInt) http.HandlerFunc {
 		X, Y, IsEqual, err := calculator.FloatCalculation(
 			req.X1, req.X2, req.X3,
 			req.Y1, req.Y2, req.Y3,
-			req.E,
+			*req.E,
 		)
 		if err != nil {
 			log.Error("Ошибка в расчётах.", slog.String("error", err.Error()))

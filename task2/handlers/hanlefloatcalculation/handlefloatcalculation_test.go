@@ -1,12 +1,12 @@
 package hanlefloatcalculation_test
 
 import (
+	"FloatService/handlers/hanlefloatcalculation"
+	"FloatService/handlers/hanlefloatcalculation/mocks"
+	"FloatService/nulllogger"
 	"bytes"
 	"encoding/json"
 	"errors"
-	"float_service/handlers/hanlefloatcalculation"
-	"float_service/handlers/hanlefloatcalculation/mocks"
-	"float_service/nulllogger"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -31,12 +31,6 @@ func TestHanleFloatCalculation(t *testing.T) {
 			name:      "Деление на нуль",
 			respError: "деление на нуль",
 			mockError: errors.New("деление на нуль"),
-		},
-
-		{
-			name:      "Отрицательная точность",
-			respError: "отрицательная точность",
-			mockError: errors.New("отрицательная точность"),
 		},
 
 		{

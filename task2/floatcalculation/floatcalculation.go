@@ -27,10 +27,6 @@ func (c *FloatCalculator) FloatCalculation(
 		X, Y, IsEqual, err = FloatCalculationError("деление на нуль")
 		return
 	}
-	if E < 0 {
-		X, Y, IsEqual, err = FloatCalculationError("отрицательная точность")
-		return
-	}
 	err = nil
 	X = X1.Mul(X3).DivRound(X2, E)
 	Y = Y1.Mul(Y3).DivRound(Y2, E)

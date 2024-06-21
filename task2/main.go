@@ -1,10 +1,10 @@
 package main
 
 import (
-	"float_service/config"
-	"float_service/floatcalculation"
-	"float_service/handlers/hanlefloatcalculation"
-	mwLogger "float_service/middleware/logger"
+	"FloatService/config"
+	"FloatService/floatcalculation"
+	"FloatService/handlers/hanlefloatcalculation"
+	mwLogger "FloatService/middleware/logger"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -26,7 +26,7 @@ func main() {
 	}
 	cfg := config.MustLoad(os.Args[1])
 	log := setupLogger(cfg.Env)
-	log.Info("Запуск float_service", slog.String("env", cfg.Env))
+	log.Info("Запуск FloatService", slog.String("env", cfg.Env))
 	log.Debug("Логгирование запущено на уровне DEBUG.")
 	router := chi.NewRouter()
 	// добавление к каждому запросу ID, чтобы потом отслеживать, что пошло не так
@@ -35,8 +35,6 @@ func main() {
 	router.Use(mwLogger.New(log))
 	// восстановление в случае паники у обработчика
 	router.Use(middleware.Recoverer)
-	// "красивые" url у обработчиков
-	router.Use(middleware.URLFormat)
 	// добавляем обработчик
 	router.Get("/", hanlefloatcalculation.New(log, &floatcalculation.FloatCalculator{}))
 	log.Info("Запускаем сервер.", slog.String("address", cfg.Address))
