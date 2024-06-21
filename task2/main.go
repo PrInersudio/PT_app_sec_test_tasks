@@ -2,6 +2,7 @@ package main
 
 import (
 	"float_service/config"
+	"float_service/floatcalculation"
 	"float_service/handlers/hanlefloatcalculation"
 	mwLogger "float_service/middleware/logger"
 	"fmt"
@@ -37,7 +38,7 @@ func main() {
 	// "красивые" url у обработчиков
 	router.Use(middleware.URLFormat)
 	// добавляем обработчик
-	router.Get("/", hanlefloatcalculation.New(log))
+	router.Get("/", hanlefloatcalculation.New(log, &floatcalculation.FloatCalculator{}))
 	log.Info("Запускаем сервер.", slog.String("address", cfg.Address))
 	srv := &http.Server{
 		Addr:         cfg.Address,

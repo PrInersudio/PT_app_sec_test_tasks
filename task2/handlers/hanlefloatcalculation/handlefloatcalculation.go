@@ -1,7 +1,6 @@
 package hanlefloatcalculation
 
 import (
-	"float_service/floatcalculation"
 	"float_service/response"
 	"log/slog"
 	"net/http"
@@ -29,8 +28,21 @@ type Response struct {
 	IsEqual string          `json:"IsEqual"`
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.28.2 --name=FloatCalculatorInt
+type FloatCalculatorInt interface {
+	FloatCalculation(
+		X1, X2, X3 decimal.Decimal,
+		Y1, Y2, Y3 decimal.Decimal,
+		E int32,
+	) (
+		X, Y decimal.Decimal,
+		IsEqual string,
+		err error,
+	)
+}
+
 // создание нового обработчика запроса
-func New(log *slog.Logger) http.HandlerFunc {
+func New(log *slog.Logger, calculator FloatCalculatorInt) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.handlefloatcalculation.New"
 		// добавляем в логи имя функции и ID запроса
@@ -56,7 +68,7 @@ func New(log *slog.Logger) http.HandlerFunc {
 		}
 		log.Debug("Валидация запроса прошла успешно.")
 		log.Debug("Начинаем расчёты.")
-		X, Y, IsEqual, err := floatcalculation.FloatCalculation(
+		X, Y, IsEqual, err := calculator.FloatCalculation(
 			req.X1, req.X2, req.X3,
 			req.Y1, req.Y2, req.Y3,
 			req.E,
