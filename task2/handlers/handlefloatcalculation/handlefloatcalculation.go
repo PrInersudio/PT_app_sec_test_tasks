@@ -1,9 +1,10 @@
-package hanlefloatcalculation
+package handlefloatcalculation
 
 import (
 	"FloatService/response"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
@@ -11,6 +12,13 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+/*
+E назначен указателем для того,
+чтобы конкретно валидировалось его отсуствие в запросе.
+Если он просто значение, то валидатор обрасывает запросы,
+где E=0.
+Нашёл данное решение в issue на гитхабе.
+*/
 type Request struct {
 	X1 decimal.Decimal `json:"X1" validate:"required"`
 	X2 decimal.Decimal `json:"X2" validate:"required"`
@@ -50,7 +58,6 @@ func New(log *slog.Logger, calculator FloatCalculatorInt) http.HandlerFunc {
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
-		log.Info("Принят запрос.")
 		log.Debug("Чтение запроса.")
 		var req Request
 		err := render.DecodeJSON(r.Body, &req)
@@ -59,7 +66,7 @@ func New(log *slog.Logger, calculator FloatCalculatorInt) http.HandlerFunc {
 			render.JSON(w, r, response.Error("Ошибка декодирования запроса."))
 			return
 		}
-		log.Debug("Декодировано тело запроса.", slog.Any("request", req))
+		log.Debug("Декодировано тело запроса.", slog.Any("request", req), slog.Any("E", DereferenceToString(req.E)))
 		log.Debug("Валидация запроса.")
 		if err := validator.New(validator.WithRequiredStructEnabled()).Struct(req); err != nil {
 			log.Error("Некорректный запрос.", slog.String("error", err.Error()))
@@ -88,4 +95,11 @@ func New(log *slog.Logger, calculator FloatCalculatorInt) http.HandlerFunc {
 		})
 		log.Info("Результаты отправлены.")
 	}
+}
+
+func DereferenceToString(p *int32) string {
+	if p != nil {
+		return strconv.FormatInt(int64(*p), 10)
+	}
+	return "nil"
 }

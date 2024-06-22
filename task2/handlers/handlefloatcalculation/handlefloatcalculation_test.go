@@ -1,8 +1,7 @@
-package hanlefloatcalculation_test
+package handlefloatcalculation
 
 import (
-	"FloatService/handlers/hanlefloatcalculation"
-	"FloatService/handlers/hanlefloatcalculation/mocks"
+	"FloatService/handlers/handlefloatcalculation/mocks"
 	"FloatService/nulllogger"
 	"bytes"
 	"encoding/json"
@@ -99,7 +98,7 @@ func TestHanleFloatCalculation(t *testing.T) {
 					test_case.mockError,
 				).Once()
 			}
-			handler := hanlefloatcalculation.New(slog.New(&nulllogger.NullLogger{}), calculatorMock)
+			handler := New(slog.New(&nulllogger.NullLogger{}), calculatorMock)
 			input := `{"X1":"1", "X2":"2", "X3":"3","Y1":"1","Y2":"2","Y3":"3","E":5}`
 			if test_case.input != "" {
 				input = test_case.input
@@ -110,7 +109,7 @@ func TestHanleFloatCalculation(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 			require.Equal(t, rr.Code, http.StatusOK)
 			body := rr.Body.String()
-			var resp hanlefloatcalculation.Response
+			var resp Response
 			require.NoError(t, json.Unmarshal([]byte(body), &resp))
 			require.Equal(t, test_case.respError, resp.Error)
 		})

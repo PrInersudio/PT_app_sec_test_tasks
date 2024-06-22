@@ -1,24 +1,129 @@
-package floatcalculation
+package tests
 
 import (
+	"FloatService/handlers/handlefloatcalculation"
+	"FloatService/response"
+	"encoding/json"
 	"log"
+	"net/url"
 	"testing"
+	"time"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func DecimalFromString(str string) decimal.Decimal {
-	num, err := decimal.NewFromString(str)
-	if err != nil {
-		log.Fatal(err.Error())
+const (
+	host         = "localhost:8081"
+	limit        = 50
+	interval     = time.Second
+	limitRateMsg = "Слишком много запросов."
+	clearance    = 5 // значение, на которое может отличаться количество запросов от лимита
+)
+
+// проверяем, нужные ли ответы присылает обработчик
+func TestFloatService_HanlderResponses(t *testing.T) {
+	cases := []struct {
+		name     string
+		request  string
+		response string
+	}{
+		{
+			name:     "Успех",
+			request:  `{"X1":"1", "X2":"2", "X3":"3","Y1":"1","Y2":"2","Y3":"3","E":5}`,
+			response: `{"status":"OK","X":"1.5","Y":"1.5","IsEqual":"T"}`,
+		},
+
+		{
+			name:     "Деление на нуль",
+			request:  `{"X1":"1", "X2":"0", "X3":"3","Y1":"1","Y2":"2","Y3":"3","E":5}`,
+			response: `{"status": "Error", "error": "деление на нуль"}`,
+		},
+
+		{
+			name:     "Некорректный запрос",
+			request:  "}{",
+			response: `{"status":"Error","error":"Ошибка декодирования запроса."}`,
+		},
+
+		{
+			name:     "Ошибка валидации: нет X1",
+			request:  `{"X2":"2", "X3":"3","Y1":"1","Y2":"2","Y3":"3","E":5}`,
+			response: `{"status": "Error", "error": "Некорректный запрос"}`,
+		},
+
+		{
+			name:     "Ошибка валидации: нет X2",
+			request:  `{"X1":"1", "X3":"3","Y1":"1","Y2":"2","Y3":"3","E":5}`,
+			response: `{"status": "Error", "error": "Некорректный запрос"}`,
+		},
+
+		{
+			name:     "Ошибка валидации: нет X3",
+			request:  `{"X1":"1", "X2":"2","Y1":"1","Y2":"2","Y3":"3","E":5}`,
+			response: `{"status": "Error", "error": "Некорректный запрос"}`,
+		},
+
+		{
+			name:     "Ошибка валидации: нет Y1",
+			request:  `{"X1":"1", "X2":"2", "X3":"3","Y2":"2","Y3":"3","E":5}`,
+			response: `{"status": "Error", "error": "Некорректный запрос"}`,
+		},
+
+		{
+			name:     "Ошибка валидации: нет Y2",
+			request:  `{"X1":"1", "X2":"2", "X3":"3","Y1":"1","Y3":"3","E":5}`,
+			response: `{"status": "Error", "error": "Некорректный запрос"}`,
+		},
+
+		{
+			name:     "Ошибка валидации: нет Y3",
+			request:  `{"X1":"1", "X2":"2", "X3":"3","Y1":"1","Y2":"2","E":5}`,
+			response: `{"status": "Error", "error": "Некорректный запрос"}`,
+		},
+
+		{
+			name:     "Ошибка валидации: нет E",
+			request:  `{"X1":"1", "X2":"2", "X3":"3","Y1":"1","Y2":"2","Y3":"3"}`,
+			response: `{"status": "Error", "error": "Некорректный запрос"}`,
+		},
+
+		{
+			name:     "Отправка целых",
+			request:  `{"X1":1, "X2":2, "X3":3,"Y1":1,"Y2":2,"Y3":3,"E":5}`,
+			response: `{"status":"OK","X":"1.5","Y":"1.5","IsEqual":"T"}`,
+		},
+
+		{
+			name:     "Отправка чисел с плавающей запятой",
+			request:  `{"X1":1.0, "X2":2.0, "X3":3.0,"Y1":1.0,"Y2":2.0,"Y3":3.0,"E":5}`,
+			response: `{"status":"OK","X":"1.5","Y":"1.5","IsEqual":"T"}`,
+		},
 	}
-	return num
+
+	for _, test_case := range cases {
+		test_case := test_case
+		t.Run(test_case.name, func(t *testing.T) {
+			t.Parallel()
+			u := url.URL{
+				Scheme: "http",
+				Host:   host,
+			}
+			var response map[string]interface{}
+			json.Unmarshal([]byte(test_case.response), &response)
+			e := httpexpect.Default(t, u.String())
+			e.GET("/").
+				WithText(test_case.request).
+				Expect().
+				Status(200).
+				JSON().Object().IsEqual(response)
+		})
+	}
 }
 
-func TestFloatCalculation(t *testing.T) {
-	calc := FloatCalculator{}
-
+// проверяем сами вычисления
+func TestFloatService_Сalculations(t *testing.T) {
 	cases := []struct {
 		name       string
 		X1, X2, X3 decimal.Decimal
@@ -280,15 +385,77 @@ func TestFloatCalculation(t *testing.T) {
 		test_case := test_case
 		t.Run(test_case.name, func(t *testing.T) {
 			t.Parallel()
-			X, Y, IsEqual, err := calc.FloatCalculation(test_case.X1, test_case.X2, test_case.X3, test_case.Y1, test_case.Y2, test_case.Y3, test_case.E)
-			assert.True(t, test_case.X.Equal(X), "ожидаемый X %v, полученный %v", test_case.X, X)
-			assert.True(t, test_case.Y.Equal(Y), "ожидаемый Y %v, полученный %v", test_case.Y, Y)
-			assert.Equal(t, test_case.IsEqual, IsEqual, "ожидаемый IsEqual %v, полученный %v", test_case.IsEqual, IsEqual)
-			if test_case.Err == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.EqualError(t, err, test_case.Err)
+			u := url.URL{
+				Scheme: "http",
+				Host:   host,
 			}
+			var resp interface{}
+			if test_case.Err == "" {
+				resp = handlefloatcalculation.Response{
+					Response: response.OK(),
+					X:        test_case.X,
+					Y:        test_case.Y,
+					IsEqual:  test_case.IsEqual,
+				}
+			} else {
+				resp = response.Error(test_case.Err)
+			}
+			e := httpexpect.Default(t, u.String())
+			e.GET("/").
+				WithJSON(handlefloatcalculation.Request{
+					X1: test_case.X1, X2: test_case.X2, X3: test_case.X3,
+					Y1: test_case.Y1, Y2: test_case.Y2, Y3: test_case.Y3,
+					E: &test_case.E,
+				}).
+				Expect().
+				Status(200).
+				JSON().Object().IsEqual(resp)
 		})
 	}
+}
+
+func DecimalFromString(str string) decimal.Decimal {
+	num, err := decimal.NewFromString(str)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return num
+}
+
+// проверяем лимит на количество запросов
+func TestFloatService_RateLimit(t *testing.T) {
+	// спим, чтобы лимит не подействовал раньше из-за других тестов
+	time.Sleep(2 * interval)
+	u := url.URL{
+		Scheme: "http",
+		Host:   host,
+	}
+	E := int32(5)
+	request := handlefloatcalculation.Request{
+		X1: DecimalFromString("1"), X2: DecimalFromString("2"), X3: DecimalFromString("3"),
+		Y1: DecimalFromString("1"), Y2: DecimalFromString("2"), Y3: DecimalFromString("3"),
+		E: &E,
+	}
+	e := httpexpect.Default(t, u.String())
+	// запросы в пределах лимита должны получить статус 200
+	statusCode := 0
+	var numRequests int
+	for numRequests = 0; numRequests < limit+clearance; numRequests++ {
+		resp := e.GET("/").WithJSON(request).Expect()
+		statusCode = resp.Raw().StatusCode
+		if statusCode == 402 {
+			resp.JSON().IsEqual(response.Error(limitRateMsg))
+			break
+		}
+	}
+	require.Equal(t, 402, statusCode)
+	log.Printf("Лимит: %d, интервал: %v, количество посланных запросов до статуса 402: %d", limit, interval, numRequests)
+	require.LessOrEqual(t, absInt(limit-numRequests), clearance)
+}
+
+func absInt(num int) int {
+	if num < 0 {
+		return -num
+	}
+	return num
 }
