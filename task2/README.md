@@ -53,28 +53,28 @@ go test ./...
 
 ## Примеры запросов и ответов
 
-–	Передача в виде строк
+- Передача в виде строк
 ``` sh
 curl -X GET -H "Content-Type: application/json" -d '{"X1":"1", "X2":"2", "X3":"3","Y1":"1","Y2":"2","Y3":"3","E":5}' localhost:8081 -w "%{http_code}\n"
 {"status":"OK","X":"1.5","Y":"1.5","IsEqual":"T"}
 200
 ```
 
-–	Передача целых чисел
+- Передача целых чисел
 ``` sh
 curl -X GET -H "Content-Type: application/json" -d '{"X1":1, "X2":2, "X3":3,"Y1":1,"Y2":2,"Y3":3,"E":5}' localhost:8081 -w "%{http_code}\n"
 {"status":"OK","X":"1.5","Y":"1.5","IsEqual":"T"}
 200
 ```
 
-–	Передача дробных чисел
+- Передача дробных чисел
 ``` sh
 curl -X GET -H "Content-Type: application/json" -d '{"X1":1.1, "X2":2.2, "X3":3.3,"Y1":1.1,"Y2":2.2,"Y3":3.3,"E":5}' localhost:8081 -w "%{http_code}\n"
 {"status":"OK","X":"1.65","Y":"1.65","IsEqual":"T"}
 200
 ```
 
-–	Достигнут лимит запросов
+- Достигнут лимит запросов
 ``` sh
 curl -X GET -H "Content-Type: application/json" -d '{"X1":"1", "X2":"2", "X3":"3","Y1":"1","Y2":"2","Y3":"3","E":5}' localhost:8081 -w "%{http_code}\n"
 {"status":"Error","error":"Слишком много запросов."}
