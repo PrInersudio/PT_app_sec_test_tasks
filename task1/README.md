@@ -20,7 +20,7 @@ go build -o float_sum.exe
 go run main.go <файл с числами>
 ```
 
-### Тесты
+### Тесты.
 ``` sh
 go test
 ```
