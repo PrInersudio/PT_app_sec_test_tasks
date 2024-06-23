@@ -1,4 +1,4 @@
-module float_sum_project
+module FloatSum
 
 go 1.22.4
 
